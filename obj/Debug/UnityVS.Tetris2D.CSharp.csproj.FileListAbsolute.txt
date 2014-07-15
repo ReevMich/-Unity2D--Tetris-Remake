@@ -1,0 +1,11 @@
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\UnityVS.Tetris2D.CSharp.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\UnityVS.Tetris2D.CSharp.pdb
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\UnityEditor.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\UnityEngine.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\Mono.Cecil.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\nunit.framework.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\Unity.DataContract.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\Temp\bin\Debug\ICSharpCode.NRefactory.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\obj\Debug\UnityVS.Tetris2D.CSharp.csprojResolveAssemblyReference.cache
+C:\Users\DaBeast\Dropbox\Tetris2D\obj\Debug\UnityVS.Tetris2D.CSharp.dll
+C:\Users\DaBeast\Dropbox\Tetris2D\obj\Debug\UnityVS.Tetris2D.CSharp.pdb
