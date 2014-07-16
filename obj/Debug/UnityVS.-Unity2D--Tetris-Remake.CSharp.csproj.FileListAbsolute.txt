@@ -1,0 +1,11 @@
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.pdb
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\UnityEditor.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\UnityEngine.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\Mono.Cecil.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\nunit.framework.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\Unity.DataContract.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\ICSharpCode.NRefactory.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\obj\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.csprojResolveAssemblyReference.cache
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\obj\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.dll
+C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\obj\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.pdb

@@ -46,11 +46,15 @@ public class Tetris : MonoBehaviour
 
     private bool nextPiece;
 
+    private bool shadowPiece;
+
     //Current rotation of an object
     private int currentRot = 0;
 
     //Current pivot of the shape
     private GameObject pivot;
+
+    private GameObject shadowPivot;
 
     //Array of all the color materials
     public Material[] materials;
@@ -58,6 +62,8 @@ public class Tetris : MonoBehaviour
     public int score;
 
     private Piece piece;
+
+    private int shadowShapeNumber;
 
     private void Start ()
     {
@@ -74,7 +80,9 @@ public class Tetris : MonoBehaviour
         piece = Piece.None;
         GenerateBoard();//Generate board
         SpawnShape();
+        SpawnShadowShape();
         InvokeRepeating("MoveDown", blockFallSpeed, blockFallSpeed); //move block down
+        //InvokeRepeating("MoveDownShadowShape", 1, 1); //move block down
     }
 
     private void Update ()
@@ -190,14 +198,6 @@ public class Tetris : MonoBehaviour
                 MoveDown();
             }
         }
-
-        if (!spawn && !gameOver)
-        {//If nothing spawned, if game over = false, then spawn
-            //StartCoroutine("Wait");
-            //spawn = true;
-            //Reset rotation
-            //currentRot = 0;
-        }
     }
 
     private void MoveDown ()
@@ -249,19 +249,15 @@ public class Tetris : MonoBehaviour
                 return;
             }
             shapes.Clear(); //Clear spawned blocks from array
+            shadowShapes.Clear();
+            DestroyShadowPiece();
             spawn = false; //Spawn a new block
             forceDown = false;
+            nextPiece = false;
 
             SpawnShape();
+            SpawnShadowShape();
         }
-    }
-
-    //Wait time before next block spawn
-    private IEnumerator Wait ()
-    {
-        yield return new WaitForSeconds(nextBlockSpawnTime);
-        SpawnShape();
-        //SpawnShadowShape();
     }
 
     private bool CheckMove (Vector3 a, Vector3 b, Vector3 c, Vector3 d)
@@ -370,191 +366,102 @@ public class Tetris : MonoBehaviour
                 {
                     pivot = new GameObject("RotateAround"); //Pivot of the shape
 
-                    nextPiece = false;
-                    switch (piece)
-                    {
-                        case Piece.Z:
-                            shapes = GenerateZPiece(xPos, height);
-                            break;
-
-                        case Piece.J:
-                            shapes = GenerateJPiece(xPos, height);
-                            break;
-
-                        case Piece.I:
-                            shapes = GenerateIPiece(xPos, height);
-                            break;
-
-                        case Piece.L:
-                            shapes = GenerateLPiece(xPos, height);
-                            break;
-
-                        case Piece.S:
-                            shapes = GenerateSPiece(xPos, height);
-                            break;
-
-                        case Piece.O:
-                            shapes = GenerateOPiece(xPos, height);
-                            break;
-
-                        case Piece.T:
-                            shapes = GenerateTPiece(xPos, height);
-
-                            break;
-                    }
+                    //SShape
+                    if (shape == 0)
+                        shapes = GenerateSPiece(xPos, height);
+                    //IShape
+                    else if (shape == 1)
+                        shapes = GenerateIPiece(xPos, height);
+                    //OShape
+                    else if (shape == 2)
+                        shapes = GenerateOPiece(xPos, height);
+                    //LShape
+                    else if (shape == 3)
+                        shapes = GenerateLPiece(xPos, height);
+                    //TShape
+                    else if (shape == 4)
+                        shapes = GenerateTPiece(xPos, height);
+                    //JShape
+                    else if (shape == 5)
+                        shapes = GenerateJPiece(xPos, height);
+                    //ZShape
+                    else
+                        shapes = GenerateZPiece(xPos, height);
                 }
                 else
                 {
                     //Create a new pivot
                     pivot = new GameObject("RotateAround"); //Pivot of the shape
-                    nextPiece = false;
+
                     //SShape
                     if (shape == 0)
-                    {
                         shapes = GenerateSPiece(xPos, height);
-                    }
                     //IShape
                     else if (shape == 1)
-                    {
                         shapes = GenerateIPiece(xPos, height);
-                    }
                     //OShape
                     else if (shape == 2)
-                    {
                         shapes = GenerateOPiece(xPos, height);
-                    }
                     //LShape
                     else if (shape == 3)
-                    {
                         shapes = GenerateLPiece(xPos, height);
-                    }
-
                     //TShape
                     else if (shape == 4)
-                    {
                         shapes = GenerateTPiece(xPos, height);
-                    }
-
                     //JShape
                     else if (shape == 5)
-                    {
                         shapes = GenerateJPiece(xPos, height);
-                    }
-
                     //ZShape
                     else
-                    {
                         shapes = GenerateZPiece(xPos, height);
-                    }
                 }
 
-                spawn = true;
-                currentRot = 0;
+                shadowShapeNumber = shape;
             }
             else if (i == 1)
             {
-                foreach (Transform child in GameObject.Find("NextPiece").transform)
+                nextPiece = true;
+
+                Transform go = GameObject.Find("NextPiece").transform;
+
+                if (go.childCount == 4)
                 {
-                    Destroy(child.gameObject);
+                    foreach (Transform child in go)
+                        Destroy(child.gameObject);
+
+                    nextShapes.Clear();
                 }
-                nextShapes.Clear();
 
                 int height2 = (int)GameObject.Find("NextPiece").transform.position.y;
                 int xPos2 = (int)GameObject.Find("NextPiece").transform.position.x;
 
-                nextPiece = true;
-
                 //SShape
                 if (shape == 0)
-                {
-                    piece = Piece.S;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 - 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 + 1, height2 + 1, 0), piece));
-
-                    Debug.Log("Spawned SShape");
-                }
+                    nextShapes = GenerateSPiece(xPos2, height2);
                 //IShape
                 else if (shape == 1)
-                {
-                    piece = Piece.I;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 3, 0), piece));
-
-                    Debug.Log("Spawned IShape");
-                }
+                    nextShapes = GenerateIPiece(xPos2, height2);
                 //OShape
                 else if (shape == 2)
-                {
-                    piece = Piece.O;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 + 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 + 1, height2 + 1, 0), piece));
-
-                    Debug.Log("Spawned OShape");
-                }
+                    nextShapes = GenerateOPiece(xPos2, height2);
                 //LShape
                 else if (shape == 3)
-                {
-                    piece = Piece.L;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 + 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 2, 0), piece));
-
-                    Debug.Log("Spawned JShape");
-                }
-
+                    nextShapes = GenerateLPiece(xPos2, height2);
                 //TShape
                 else if (shape == 4)
-                {
-                    piece = Piece.T;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 - 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 + 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-
-                    Debug.Log("Spawned TShape");
-                }
-
+                    nextShapes = GenerateTPiece(xPos2, height2);
                 //JShape
                 else if (shape == 5)
-                {
-                    piece = Piece.J;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 - 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 2, 0), piece));
-
-                    Debug.Log("Spawned LShape");
-                }
-
+                    nextShapes = GenerateJPiece(xPos2, height2);
                 //ZShape
                 else
-                {
-                    piece = Piece.Z;
-
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 + 1, height2, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2, height2 + 1, 0), piece));
-                    nextShapes.Add(GenerateBlock(new Vector3(xPos2 - 1, height2 + 1, 0), piece));
-
-                    Debug.Log("Spawned ZShape");
-                }
-
-                currentRot = 0;
+                    nextShapes = GenerateZPiece(xPos2, height2);
             }
         }
+
+        spawn = true;
+        currentRot = 0;
+        nextPiece = false;
     }
 
     //Create a block at the position
@@ -607,9 +514,10 @@ public class Tetris : MonoBehaviour
         }
 
         if (nextPiece)
-        {
             obj.parent = GameObject.Find("NextPiece").transform;
-        }
+        else if (shadowPiece)
+            obj.parent = GameObject.Find("ShadowPiece").transform;
+
         return obj;
     }
 
@@ -778,22 +686,67 @@ public class Tetris : MonoBehaviour
 
     private void SpawnShadowShape ()
     {
-        shadowShapes = shapes;
-        Transform obj = null;
-        Material shadowMat = null;
-        piece = Piece.None;
+        int height = board.GetLength(1) - 4;
+        int xPos = board.GetLength(0) / 2 - 1;
 
-        foreach (Transform shape in shadowShapes)
-        {
-            obj = (Transform)Instantiate(shape) as Transform;
-            shadowMat = obj.renderer.material;
-            shadowMat.color = new Color(shadowMat.color.r, shadowMat.color.g, shadowMat.color.b, .35f);
-            obj.renderer.material = shadowMat;
-        }
+        //SShape
+        if (shadowShapeNumber == 0)
+            shapes = GenerateSPiece(xPos, height);
+        //IShape
+        else if (shadowShapeNumber == 1)
+            shapes = GenerateIPiece(xPos, height);
+        //OShape
+        else if (shadowShapeNumber == 2)
+            shapes = GenerateOPiece(xPos, height);
+        //LShape
+        else if (shadowShapeNumber == 3)
+            shapes = GenerateLPiece(xPos, height);
+        //TShape
+        else if (shadowShapeNumber == 4)
+            shapes = GenerateTPiece(xPos, height);
+        //JShape
+        else if (shadowShapeNumber == 5)
+            shapes = GenerateJPiece(xPos, height);
+        //ZShape
+        else
+            shapes = GenerateZPiece(xPos, height);
+
+        shadowPivot = new GameObject("ShadowRotateAround");
     }
 
     private void MoveDownShadowShape ()
     {
+        //Spawned blocks positions
+        if (shadowShapes.Count != 4)
+        {
+            return;
+        }
+        Vector3 a = shadowShapes[0].transform.position;
+        Vector3 b = shadowShapes[1].transform.position;
+        Vector3 c = shadowShapes[2].transform.position;
+        Vector3 d = shadowShapes[3].transform.position;
+
+        if (CheckMove(a, b, c, d) == true)
+        { // Will we hit anything if we move block down(true = we can move)
+            //Move block down by 1
+            a = new Vector3(Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y - 1.0f), a.z);
+            b = new Vector3(Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y - 1.0f), b.z);
+            c = new Vector3(Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y - 1.0f), c.z);
+            d = new Vector3(Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y - 1.0f), d.z);
+
+            shadowPivot.transform.position = new Vector3(shadowPivot.transform.position.x, shadowPivot.transform.position.y - 1, shadowPivot.transform.position.z);
+
+            shadowShapes[0].transform.position = a;
+            shadowShapes[1].transform.position = b;
+            shadowShapes[2].transform.position = c;
+            shadowShapes[3].transform.position = d;
+        }
+        else
+        {
+            //We hit something. Stop and mark current shape location as filled in board, also destroy last pivot game object
+
+            Destroy(shadowPivot.gameObject); //Destroy pivot
+        }
     }
 
     private List<Transform> GenerateOPiece (int xPos, int height)
@@ -802,7 +755,11 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos + 0.5f, height + 0.5f, 0);
+        if (!nextPiece || !shadowPiece)
+            pivot.transform.position = new Vector3(xPos + 0.5f, height + 0.5f, 0);
+
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos + 0.5f, height + 0.5f, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
@@ -820,7 +777,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos, height, 0);
+        if (!nextPiece)
+            pivot.transform.position = new Vector3(xPos, height, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
@@ -838,7 +796,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos, height + 1, 0);
+        if (!nextPiece)
+            pivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
@@ -856,7 +815,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
+        if (!nextPiece)
+            pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
@@ -874,7 +834,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos, height + 1, 0);
+        if (!nextPiece)
+            pivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
@@ -892,7 +853,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos, height + 1, 0);
+        if (!nextPiece)
+            pivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
@@ -910,7 +872,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        pivot.transform.position = new Vector3(xPos, height + 1, 0);
+        if (!nextPiece)
+            pivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
@@ -919,6 +882,16 @@ public class Tetris : MonoBehaviour
 
         Debug.Log("Spawned J Shape");
         return list;
+    }
+
+    private void DestroyShadowPiece ()
+    {
+        GameObject[] gos = GameObject.FindGameObjectsWithTag("ShadowBlock");
+
+        for (int i = 0; i < gos.Length; i++)
+        {
+            Destroy(gos[i].gameObject);
+        }
     }
 }
 
@@ -935,6 +908,5 @@ internal enum Piece
 }
 
 /*
-* TODO: Make Methods for each piece
 * TODO: WORK ON SHADOW SHAPE
 */
