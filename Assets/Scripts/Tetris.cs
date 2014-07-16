@@ -374,64 +374,31 @@ public class Tetris : MonoBehaviour
                     switch (piece)
                     {
                         case Piece.Z:
-                            pivot.transform.position = new Vector3(xPos, height + 1, 0);
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos - 1, height + 1, 0), piece));
+                            shapes = GenerateZPiece(xPos, height);
                             break;
 
                         case Piece.J:
-                            pivot.transform.position = new Vector3(xPos, height + 1, 0);
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 2, 0), piece));
+                            shapes = GenerateJPiece(xPos, height);
                             break;
 
                         case Piece.I:
-                            pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
-
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 2, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 3, 0), piece));
+                            shapes = GenerateIPiece(xPos, height);
                             break;
 
                         case Piece.L:
-                            pivot.transform.position = new Vector3(xPos, height + 1, 0);
-
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 2, 0), piece));
+                            shapes = GenerateLPiece(xPos, height);
                             break;
 
                         case Piece.S:
-                            pivot.transform.position = new Vector3(xPos, height + 1, 0);
-
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos + 1, height + 1, 0), piece));
+                            shapes = GenerateSPiece(xPos, height);
                             break;
 
                         case Piece.O:
-                            pivot.transform.position = new Vector3(xPos + 0.5f, height + 0.5f, 0);
-
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos + 1, height + 1, 0), piece));
+                            shapes = GenerateOPiece(xPos, height);
                             break;
 
                         case Piece.T:
-                            pivot.transform.position = new Vector3(xPos, height, 0);
-
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                            shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
+                            shapes = GenerateTPiece(xPos, height);
 
                             break;
                     }
@@ -444,41 +411,17 @@ public class Tetris : MonoBehaviour
                     //SShape
                     if (shape == 0)
                     {
-                        piece = Piece.S;
-                        pivot.transform.position = new Vector3(xPos, height + 1, 0);
-
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos + 1, height + 1, 0), piece));
-
-                        Debug.Log("Spawned SShape");
+                        shapes = GenerateSPiece(xPos, height);
                     }
                     //IShape
                     else if (shape == 1)
                     {
-                        piece = Piece.I;
-                        pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
-
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 2, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 3, 0), piece));
-
-                        Debug.Log("Spawned IShape");
+                        shapes = GenerateIPiece(xPos, height);
                     }
                     //OShape
                     else if (shape == 2)
                     {
-                        piece = Piece.O;
-                        pivot.transform.position = new Vector3(xPos + 0.5f, height + 0.5f, 0);
-
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos + 1, height + 1, 0), piece));
-
-                        Debug.Log("Spawned OShape");
+                        shapes = GenerateOPiece(xPos, height);
                     }
                     //LShape
                     else if (shape == 3)
@@ -489,15 +432,7 @@ public class Tetris : MonoBehaviour
                     //TShape
                     else if (shape == 4)
                     {
-                        piece = Piece.T;
-                        pivot.transform.position = new Vector3(xPos, height, 0);
-
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-
-                        Debug.Log("Spawned TShape");
+                        shapes = GenerateTPiece(xPos, height);
                     }
 
                     //JShape
@@ -509,15 +444,7 @@ public class Tetris : MonoBehaviour
                     //ZShape
                     else
                     {
-                        piece = Piece.Z;
-                        pivot.transform.position = new Vector3(xPos, height + 1, 0);
-
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
-                        shapes.Add(GenerateBlock(new Vector3(xPos - 1, height + 1, 0), piece));
-
-                        Debug.Log("Spawned ZShape");
+                        shapes = GenerateZPiece(xPos, height);
                     }
                 }
 
@@ -867,6 +794,96 @@ public class Tetris : MonoBehaviour
 
     private void MoveDownShadowShape ()
     {
+    }
+
+    private List<Transform> GenerateOPiece (int xPos, int height)
+    {
+        piece = Piece.O;
+
+        List<Transform> list = new List<Transform>();
+
+        pivot.transform.position = new Vector3(xPos + 0.5f, height + 0.5f, 0);
+
+        list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos + 1, height + 1, 0), piece));
+
+        Debug.Log("Spawned O Shape");
+
+        return list;
+    }
+
+    private List<Transform> GenerateTPiece (int xPos, int height)
+    {
+        piece = Piece.T;
+
+        List<Transform> list = new List<Transform>();
+
+        pivot.transform.position = new Vector3(xPos, height, 0);
+
+        list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
+
+        Debug.Log("Spawned T Shape");
+
+        return list;
+    }
+
+    private List<Transform> GenerateZPiece (int xPos, int height)
+    {
+        piece = Piece.Z;
+
+        List<Transform> list = new List<Transform>();
+
+        pivot.transform.position = new Vector3(xPos, height + 1, 0);
+
+        list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos - 1, height + 1, 0), piece));
+
+        Debug.Log("Spawned Z Shape");
+
+        return list;
+    }
+
+    private List<Transform> GenerateIPiece (int xPos, int height)
+    {
+        piece = Piece.I;
+
+        List<Transform> list = new List<Transform>();
+
+        pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
+
+        list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 2, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 3, 0), piece));
+
+        Debug.Log("Spawned I Shape");
+
+        return list;
+    }
+
+    private List<Transform> GenerateSPiece (int xPos, int height)
+    {
+        piece = Piece.S;
+
+        List<Transform> list = new List<Transform>();
+
+        pivot.transform.position = new Vector3(xPos, height + 1, 0);
+
+        list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
+        list.Add(GenerateBlock(new Vector3(xPos + 1, height + 1, 0), piece));
+
+        Debug.Log("Spawned S Shape");
+
+        return list;
     }
 
     private List<Transform> GenerateLPiece (int xPos, int height)
