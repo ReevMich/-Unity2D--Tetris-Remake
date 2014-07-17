@@ -82,7 +82,7 @@ public class Tetris : MonoBehaviour
         SpawnShape();
         SpawnShadowShape();
         InvokeRepeating("MoveDown", blockFallSpeed, blockFallSpeed); //move block down
-        //InvokeRepeating("MoveDownShadowShape", 1, 1); //move block down
+        InvokeRepeating("MoveDownShadowShape", 2, 2); //move block down
     }
 
     private void Update ()
@@ -232,6 +232,7 @@ public class Tetris : MonoBehaviour
             //We hit something. Stop and mark current shape location as filled in board, also destroy last pivot game object
 
             Destroy(pivot.gameObject); //Destroy pivot
+            Destroy(shadowPivot.gameObject); // Destroy shadow pivot
 
             //Set ID in board
             board[Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y)] = 1;
@@ -366,27 +367,36 @@ public class Tetris : MonoBehaviour
                 {
                     pivot = new GameObject("RotateAround"); //Pivot of the shape
 
-                    //SShape
-                    if (shape == 0)
-                        shapes = GenerateSPiece(xPos, height);
-                    //IShape
-                    else if (shape == 1)
-                        shapes = GenerateIPiece(xPos, height);
-                    //OShape
-                    else if (shape == 2)
-                        shapes = GenerateOPiece(xPos, height);
-                    //LShape
-                    else if (shape == 3)
-                        shapes = GenerateLPiece(xPos, height);
-                    //TShape
-                    else if (shape == 4)
-                        shapes = GenerateTPiece(xPos, height);
-                    //JShape
-                    else if (shape == 5)
-                        shapes = GenerateJPiece(xPos, height);
-                    //ZShape
-                    else
-                        shapes = GenerateZPiece(xPos, height);
+                    switch (piece)
+                    {
+                        case Piece.Z:
+                            shapes = GenerateZPiece(xPos, height);
+                            break;
+
+                        case Piece.J:
+                            shapes = GenerateJPiece(xPos, height);
+                            break;
+
+                        case Piece.I:
+                            shapes = GenerateIPiece(xPos, height);
+                            break;
+
+                        case Piece.L:
+                            shapes = GenerateLPiece(xPos, height);
+                            break;
+
+                        case Piece.S:
+                            shapes = GenerateSPiece(xPos, height);
+                            break;
+
+                        case Piece.O:
+                            shapes = GenerateOPiece(xPos, height);
+                            break;
+
+                        case Piece.T:
+                            shapes = GenerateTPiece(xPos, height);
+                            break;
+                    }
                 }
                 else
                 {
@@ -516,7 +526,10 @@ public class Tetris : MonoBehaviour
         if (nextPiece)
             obj.parent = GameObject.Find("NextPiece").transform;
         else if (shadowPiece)
+        {
+            obj.tag = "ShadowBlock";
             obj.parent = GameObject.Find("ShadowPiece").transform;
+        }
 
         return obj;
     }
@@ -688,30 +701,32 @@ public class Tetris : MonoBehaviour
     {
         int height = board.GetLength(1) - 4;
         int xPos = board.GetLength(0) / 2 - 1;
+        shadowPiece = true;
+        shadowPivot = new GameObject("ShadowRotateAround");
 
         //SShape
         if (shadowShapeNumber == 0)
-            shapes = GenerateSPiece(xPos, height);
+            shadowShapes = GenerateSPiece(xPos, height);
         //IShape
         else if (shadowShapeNumber == 1)
-            shapes = GenerateIPiece(xPos, height);
+            shadowShapes = GenerateIPiece(xPos, height);
         //OShape
         else if (shadowShapeNumber == 2)
-            shapes = GenerateOPiece(xPos, height);
+            shadowShapes = GenerateOPiece(xPos, height);
         //LShape
         else if (shadowShapeNumber == 3)
-            shapes = GenerateLPiece(xPos, height);
+            shadowShapes = GenerateLPiece(xPos, height);
         //TShape
         else if (shadowShapeNumber == 4)
-            shapes = GenerateTPiece(xPos, height);
+            shadowShapes = GenerateTPiece(xPos, height);
         //JShape
         else if (shadowShapeNumber == 5)
-            shapes = GenerateJPiece(xPos, height);
+            shadowShapes = GenerateJPiece(xPos, height);
         //ZShape
         else
-            shapes = GenerateZPiece(xPos, height);
+            shadowShapes = GenerateZPiece(xPos, height);
 
-        shadowPivot = new GameObject("ShadowRotateAround");
+        shadowPiece = false;
     }
 
     private void MoveDownShadowShape ()
@@ -780,6 +795,9 @@ public class Tetris : MonoBehaviour
         if (!nextPiece)
             pivot.transform.position = new Vector3(xPos, height, 0);
 
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos, height, 0);
+
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
@@ -798,6 +816,9 @@ public class Tetris : MonoBehaviour
 
         if (!nextPiece)
             pivot.transform.position = new Vector3(xPos, height + 1, 0);
+
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
@@ -818,6 +839,9 @@ public class Tetris : MonoBehaviour
         if (!nextPiece)
             pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
 
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
+
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos, height + 2, 0), piece));
@@ -836,6 +860,9 @@ public class Tetris : MonoBehaviour
 
         if (!nextPiece)
             pivot.transform.position = new Vector3(xPos, height + 1, 0);
+
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
@@ -856,6 +883,9 @@ public class Tetris : MonoBehaviour
         if (!nextPiece)
             pivot.transform.position = new Vector3(xPos, height + 1, 0);
 
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos, height + 1, 0);
+
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos + 1, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos, height + 1, 0), piece));
@@ -874,6 +904,9 @@ public class Tetris : MonoBehaviour
 
         if (!nextPiece)
             pivot.transform.position = new Vector3(xPos, height + 1, 0);
+
+        if (shadowPiece)
+            shadowPivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         list.Add(GenerateBlock(new Vector3(xPos, height, 0), piece));
         list.Add(GenerateBlock(new Vector3(xPos - 1, height, 0), piece));
