@@ -38,6 +38,8 @@ public class Tetris : MonoBehaviour
 
     private List<Transform> shadowShapes = new List<Transform>();
 
+    public Vector3[] shadowPosition;
+
     //Set true if game over
     private bool gameOver;
 
@@ -84,6 +86,7 @@ public class Tetris : MonoBehaviour
 
         board = new int[12, 24];//Set board width and height
         piece = Piece.None;
+        shadowPosition = new Vector3[4];
         GenerateBoard();//Generate board
         SpawnShape();
         SpawnShadowShape();
@@ -93,29 +96,28 @@ public class Tetris : MonoBehaviour
 
     private void Update ()
     {
+        // If there is block
         if (spawn && shapes.Count == 4)
-        { //If there is block
-            //Get spawned blocks positions
-            Vector3 a = shapes[0].transform.position;
-            Vector3 b = shapes[1].transform.position;
-            Vector3 c = shapes[2].transform.position;
-            Vector3 d = shapes[3].transform.position;
-
+        {
             if (!forceDown)
             {
+                // Reset Left Arrow timer
                 if (Input.GetKeyUp(KeyCode.LeftArrow))
                 {
                     leftMovementTime = movementTime;
                     holding = false;
                 }
+
+                //Move left continuously
                 if (Input.GetKeyDown(KeyCode.LeftArrow))
                     if (!holding)
                     {
                         MoveLeft();
                     }
 
+                //Move left
                 if (Input.GetKey(KeyCode.LeftArrow))
-                {//Move left
+                {
                     leftMovementTime -= Time.deltaTime;
 
                     if (leftMovementTime <= 0)
@@ -126,18 +128,22 @@ public class Tetris : MonoBehaviour
                     }
                 }
 
+                // Reset right Arrow timer
                 if (Input.GetKeyUp(KeyCode.RightArrow))
                 {
                     rightMovementTime = movementTime;
                     holding = false;
                 }
+
+                //Move right continuously
                 if (Input.GetKeyDown(KeyCode.RightArrow))
-                {//Move right
+                {
                     MoveRight();
                 }
 
+                //Move right
                 if (Input.GetKey(KeyCode.RightArrow))
-                {//Move right
+                {
                     rightMovementTime -= Time.deltaTime;
                     if (rightMovementTime <= 0)
                     {
@@ -170,6 +176,7 @@ public class Tetris : MonoBehaviour
             }
             if (!onGround)
             {
+                MoveDownShadowShape();
                 MoveDownShadowShape();
             }
         }
@@ -233,6 +240,45 @@ public class Tetris : MonoBehaviour
 
             SpawnShape();
             SpawnShadowShape();
+        }
+    }
+
+    private void MoveDownShadowShape ()
+    {
+        //Spawned blocks positions
+        if (shadowShapes.Count != 4)
+        {
+            return;
+        }
+        Vector3 a = shadowPosition[0];
+        Vector3 b = shadowPosition[1];
+        Vector3 c = shadowPosition[2];
+        Vector3 d = shadowPosition[3];
+
+        if (CheckMove(a, b, c, d) == true)
+        { // Will we hit anything if we move block down(true = we can move)
+            //Move block down by 1
+            a = new Vector3(Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y - 1.0f), a.z);
+            b = new Vector3(Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y - 1.0f), b.z);
+            c = new Vector3(Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y - 1.0f), c.z);
+            d = new Vector3(Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y - 1.0f), d.z);
+
+            shadowPivot.transform.position = new Vector3(shadowPivot.transform.position.x, shadowPivot.transform.position.y - 1, shadowPivot.transform.position.z);
+
+            shadowPosition[0] = a;
+            shadowPosition[1] = b;
+            shadowPosition[2] = c;
+            shadowPosition[3] = d;
+        }
+        else
+        {
+            print("we are hitting something");
+            onGround = true;
+
+            shadowShapes[0].transform.position = a;
+            shadowShapes[1].transform.position = b;
+            shadowShapes[2].transform.position = c;
+            shadowShapes[3].transform.position = d;
         }
     }
 
@@ -607,6 +653,7 @@ public class Tetris : MonoBehaviour
             c.parent = null;
             d.parent = null;
         }
+        onGround = false;
     }
 
     private void RotateShadow (Transform a, Transform b, Transform c, Transform d)
@@ -639,6 +686,7 @@ public class Tetris : MonoBehaviour
             c.parent = null;
             d.parent = null;
         }
+        onGround = false;
     }
 
     private bool CheckRotate (Vector3 a, Vector3 b, Vector3 c, Vector3 d)
@@ -737,41 +785,11 @@ public class Tetris : MonoBehaviour
         shadowPiece = false;
 
         onGround = false;
-    }
 
-    private void MoveDownShadowShape ()
-    {
-        //Spawned blocks positions
-        if (shadowShapes.Count != 4)
-        {
-            return;
-        }
-        Vector3 a = shadowShapes[0].transform.position;
-        Vector3 b = shadowShapes[1].transform.position;
-        Vector3 c = shadowShapes[2].transform.position;
-        Vector3 d = shadowShapes[3].transform.position;
-
-        if (CheckMove(a, b, c, d) == true)
-        { // Will we hit anything if we move block down(true = we can move)
-            //Move block down by 1
-            a = new Vector3(Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y - 1.0f), a.z);
-            b = new Vector3(Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y - 1.0f), b.z);
-            c = new Vector3(Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y - 1.0f), c.z);
-            d = new Vector3(Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y - 1.0f), d.z);
-
-            shadowPivot.transform.position = new Vector3(shadowPivot.transform.position.x, shadowPivot.transform.position.y - 1, shadowPivot.transform.position.z);
-
-            shadowShapes[0].transform.position = a;
-            shadowShapes[1].transform.position = b;
-            shadowShapes[2].transform.position = c;
-            shadowShapes[3].transform.position = d;
-        }
-        else
-        {
-            print("we are hitting something");
-            onGround = true;
-            HighestPoint();
-        }
+        shadowPosition[0] = shadowShapes[0].transform.position;
+        shadowPosition[1] = shadowShapes[1].transform.position;
+        shadowPosition[2] = shadowShapes[2].transform.position;
+        shadowPosition[3] = shadowShapes[3].transform.position;
     }
 
     private List<Transform> GenerateOPiece (int xPos, int height)
@@ -938,6 +956,8 @@ public class Tetris : MonoBehaviour
 
     private void MoveLeft ()
     {
+        ResetShadowPosition();
+
         Vector3 a = shapes[0].transform.position;
         Vector3 b = shapes[1].transform.position;
         Vector3 c = shapes[2].transform.position;
@@ -1024,13 +1044,21 @@ public class Tetris : MonoBehaviour
                     if (y > highPoint)
                     {
                         highestPoint = y;
-                        print("Highest point on the board is " + highestPoint);
+                        // print("Highest point on the board is " + highestPoint);
                     }
                     highPoint = y;
-                    print("Board[" + x + "," + y + "]:" + board[x, y]);
+                    //print("Board[" + x + "," + y + "]:" + board[x, y]);
                 }
             }
         }
+    }
+
+    private void ResetShadowPosition ()
+    {
+        shadowPosition[0] = Vector3.zero;
+        shadowPosition[1] = Vector3.zero;
+        shadowPosition[2] = Vector3.zero;
+        shadowPosition[3] = Vector3.zero;
     }
 }
 
