@@ -59,6 +59,8 @@
     <Compile Include="Assets\JMO Assets\MatCap Shaders\Demo\Assets\MC_AutoRotate.cs" />
     <Compile Include="Assets\JMO Assets\MatCap Shaders\Demo\Assets\MC_SwitchTexture.cs" />
     <Compile Include="Assets\JMO Assets\Toony Gooch\Demo\AutoRotateObject.cs" />
+    <Compile Include="Assets\Scripts\Coroutine.cs" />
+    <Compile Include="Assets\Scripts\Level.cs" />
     <Compile Include="Assets\Scripts\Score.cs" />
     <Compile Include="Assets\Scripts\Tetris.cs" />
     <Compile Include="Assets\Scripts\Utilities\HudPositioner.cs" />
