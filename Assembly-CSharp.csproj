@@ -49,7 +49,6 @@
      <Compile Include="Assets\JMO Assets\MatCap Shaders\Demo\Assets\MC_AutoRotate.cs" />
      <Compile Include="Assets\JMO Assets\MatCap Shaders\Demo\Assets\MC_SwitchTexture.cs" />
      <Compile Include="Assets\JMO Assets\Toony Gooch\Demo\AutoRotateObject.cs" />
-     <Compile Include="Assets\Scripts\Coroutine.cs" />
      <Compile Include="Assets\Scripts\Level.cs" />
      <Compile Include="Assets\Scripts\Score.cs" />
      <Compile Include="Assets\Scripts\Tetris.cs" />
@@ -70,6 +69,7 @@
      <None Include="Assets\Standard Assets\Toon Shading\Sources\Shaders\Toony-Lighted.shader" />
      <None Include="Assets\JMO Assets\MatCap Shaders\Shaders\MatCap_Plain.shader" />
      <None Include="Assets\JMO Assets\MatCap Shaders\Shaders\MatCap_Plain_Additive.shader" />
+     <None Include="Assets\Shaders\shader.shader" />
      <None Include="Assets\JMO Assets\MatCap Shaders\Shaders\MatCap_TextureMult.shader" />
      <None Include="Assets\JMO Assets\Toony Gooch\Shaders\Toony_Gooch_RimAlpha.shader" />
      <None Include="Assets\JMO Assets\Toony Gooch\Shaders\Toony_Gooch_RimOutline.shader" />
