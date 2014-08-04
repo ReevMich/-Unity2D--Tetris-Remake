@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,7 +28,7 @@ public class Tetris : MonoBehaviour
     //Block fall speed
     public float blockFallSpeed;
 
-    private const float FORCED_FALL_SPEED = .1f;
+    private const float SOFT_DROP_SPEED = .1f;
 
     //Game over level
     public int gameOverHeight = 22; //20 board + 2 edge
@@ -46,7 +47,7 @@ public class Tetris : MonoBehaviour
 
     private bool nextPiece;
 
-    private bool forceDown;
+    private bool softDrop;
     private bool shadowPiece;
 
     public bool holding = false;
@@ -65,53 +66,44 @@ public class Tetris : MonoBehaviour
 
     private Piece piece;
 
+    public int linesCleared;
+
     private int shadowShapeNumber;
 
     private int nextShapeNumber;
 
-    private static int linesCleared = 0;
-
-    public static int LinesCleared
-    {
-        get { return linesCleared; }
-        set { linesCleared = value; }
-    }
-
     private IEnumerator Start ()
     {
-        //Default board is 10x16
-
-        //1+10+1 - Side edge
-
-        //+2 - Space for spawning
-        //+1 - Top edge
-        //20 - Height
-        //+1 - Down edge
-        board = new int[12, 24];//Set board width and height
+        //Set board width and height
+        board = new int[12, 25];
         piece = Piece.None;
         shadowPosition = new Vector3[4];
         GenerateBoard();//Generate board
         SpawnShape();
         SpawnShadowShape();
         blockFallSpeed = Level.GetGameSpeed();
-        //InvokeRepeating("MoveDown", BlockFallSpeed, BlockFallSpeed); //move block down
-        //InvokeRepeating("MoveDownShadowShape", .05f, .05f); //move block down
 
         yield return StartCoroutine("MoveDown", blockFallSpeed);
     }
 
-    private void ForceDown ()
+    private void HardDrop ()
     {
         StopCoroutine("MoveDown");
+
         Vector3 a = shadowShapes[0].transform.position;
         Vector3 b = shadowShapes[1].transform.position;
         Vector3 c = shadowShapes[2].transform.position;
         Vector3 d = shadowShapes[3].transform.position;
 
+        // sends the score method the difference in y position between the shape
+        // and shadow shape before it drops.
+        Score.IncreaseScoreHardDrop(Mathf.RoundToInt(shapes[3].position.y - d.y));
+
         shapes[0].position = a;
         shapes[1].position = b;
         shapes[2].position = c;
         shapes[3].position = d;
+
         StartCoroutine("MoveDown", blockFallSpeed);
     }
 
@@ -183,7 +175,7 @@ public class Tetris : MonoBehaviour
 
             if (Input.GetKeyUp(KeyCode.DownArrow))
             {
-                forceDown = false;
+                softDrop = false;
                 StopCoroutine("MoveDown");
                 StartCoroutine("MoveDown", blockFallSpeed);
             }
@@ -191,8 +183,8 @@ public class Tetris : MonoBehaviour
             {
                 //Move down fast
                 StopCoroutine("MoveDown");
-                forceDown = true;
-                StartCoroutine("MoveDown", FORCED_FALL_SPEED);
+                softDrop = true;
+                StartCoroutine("MoveDown", SOFT_DROP_SPEED);
             }
 
             if (Input.GetKeyDown(KeyCode.UpArrow))
@@ -209,7 +201,7 @@ public class Tetris : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                ForceDown();
+                HardDrop();
             }
 
             if (Input.GetKeyDown(KeyCode.Z))
@@ -269,9 +261,11 @@ public class Tetris : MonoBehaviour
 
                 //****************************************************
                 CheckRow(1); //Check for any match
+                Score.IncreaseScoreLine(linesCleared);
                 CheckRow(gameOverHeight); //Check for game over
                 //****************************************************
 
+                linesCleared = 0;
                 if (gameOver)
                 {
                     StopAllCoroutines();
@@ -287,9 +281,9 @@ public class Tetris : MonoBehaviour
                 SpawnShadowShape();
             }
 
-            if (forceDown)
+            if (softDrop)
             {
-                Score.IncreaseScoreForceFall();
+                Score.IncreaseScoreSoftDrop();
             }
 
             yield return new WaitForSeconds(time);
@@ -298,7 +292,7 @@ public class Tetris : MonoBehaviour
 
     private IEnumerator MoveDownShadowShape ()
     {
-        while (!onGround)
+        while (true)
         {
             //Spawned blocks positions
             if (shadowShapes.Count != 4)
@@ -331,10 +325,10 @@ public class Tetris : MonoBehaviour
 
                 onGround = true;
 
-                shadowShapes[0].renderer.material.color = new Color32(0, 0, 0, 70);
-                shadowShapes[1].renderer.material.color = new Color32(0, 0, 0, 70);
-                shadowShapes[2].renderer.material.color = new Color32(0, 0, 0, 70);
-                shadowShapes[3].renderer.material.color = new Color32(0, 0, 0, 70);
+                shadowShapes[0].renderer.material.color = new Color32(0, 0, 0, 100);
+                shadowShapes[1].renderer.material.color = new Color32(0, 0, 0, 100);
+                shadowShapes[2].renderer.material.color = new Color32(0, 0, 0, 100);
+                shadowShapes[3].renderer.material.color = new Color32(0, 0, 0, 100);
 
                 shadowShapes[0].transform.position = a;
                 shadowShapes[1].transform.position = b;
@@ -348,22 +342,29 @@ public class Tetris : MonoBehaviour
 
     private bool CheckMove (Vector3 a, Vector3 b, Vector3 c, Vector3 d)
     {
-        //Check, if we move a block down will it hit something
-        if (board[Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y - 1)] == 1)
+        try
         {
-            return false;
+            //Check, if we move a block down will it hit something
+            if (board[Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y - 1)] == 1)
+            {
+                return false;
+            }
+            if (board[Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y - 1)] == 1)
+            {
+                return false;
+            }
+            if (board[Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y - 1)] == 1)
+            {
+                return false;
+            }
+            if (board[Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y - 1)] == 1)
+            {
+                return false;
+            }
         }
-        if (board[Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y - 1)] == 1)
+        catch
         {
-            return false;
-        }
-        if (board[Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y - 1)] == 1)
-        {
-            return false;
-        }
-        if (board[Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y - 1)] == 1)
-        {
-            return false;
+            return true;
         }
 
         return true;
@@ -376,6 +377,11 @@ public class Tetris : MonoBehaviour
         {//Left
             if (board[Mathf.RoundToInt(a.x - 1), Mathf.RoundToInt(a.y)] == 1 || board[Mathf.RoundToInt(b.x - 1), Mathf.RoundToInt(b.y)] == 1 || board[Mathf.RoundToInt(c.x - 1), Mathf.RoundToInt(c.y)] == 1 || board[Mathf.RoundToInt(d.x - 1), Mathf.RoundToInt(d.y)] == 1)
             {
+                if (!holding)
+                {
+                    SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
+                }
+
                 return false;
             }
         }
@@ -383,15 +389,16 @@ public class Tetris : MonoBehaviour
         {//Right
             if (board[Mathf.RoundToInt(a.x + 1), Mathf.RoundToInt(a.y)] == 1 || board[Mathf.RoundToInt(b.x + 1), Mathf.RoundToInt(b.y)] == 1 || board[Mathf.RoundToInt(c.x + 1), Mathf.RoundToInt(c.y)] == 1 || board[Mathf.RoundToInt(d.x + 1), Mathf.RoundToInt(d.y)] == 1)
             {
+                SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
                 return false;
             }
         }
+
         return true;
     }
 
     private void GenerateBoard ()
     {
-        Material mat = new Material(blockMaterial);
         GameObject boardObject = GameObject.Find("Board");
         for (int x = 0; x < board.GetLength(0); x++)
         {
@@ -404,9 +411,18 @@ public class Tetris : MonoBehaviour
                         //Board
                         board[x, y] = 0;
                         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        Material mat = new Material(blockMaterial);
                         cube.transform.position = new Vector3(x, y, 1);
                         cube.transform.localEulerAngles = new Vector3(0, 0, 180);
-                        mat.color = new Color32(110, 110, 110, 90);
+                        if (y >= 22)
+                        {
+                            mat.color = new Color32(110, 110, 110, 0);
+                        }
+                        else
+                        {
+                            mat.color = new Color32(110, 110, 110, 90);
+                        }
+
                         cube.renderer.material = mat;
 
                         cube.transform.parent = boardObject.transform;
@@ -434,8 +450,8 @@ public class Tetris : MonoBehaviour
 
         for (int i = 0; i < 2; i++)
         {
-            int shape = Random.Range(0, 7);//Random shape
-            /*            shape = 3;*/
+            int shape = UnityEngine.Random.Range(0, 7);//Random shape
+            shape = 1;
             if (i == 0)
             {
                 if (nextShapes.Count != 0)
@@ -443,25 +459,25 @@ public class Tetris : MonoBehaviour
                     pivot = new GameObject("RotateAround"); //Pivot of the shape
                     //SShape
                     if (nextShapeNumber == 0)
-                        shapes = GenerateSPiece(xPos, height + 1);
+                        shapes = GenerateSPiece(xPos, height);
                     //IShape
                     else if (nextShapeNumber == 1)
-                        shapes = GenerateIPiece(xPos + 1, height);
+                        shapes = GenerateIPiece(xPos, height - 2);
                     //OShape
                     else if (nextShapeNumber == 2)
-                        shapes = GenerateOPiece(xPos, height + 1);
+                        shapes = GenerateOPiece(xPos, height);
                     //LShape
                     else if (nextShapeNumber == 3)
-                        shapes = GenerateLPiece(xPos, height);
+                        shapes = GenerateLPiece(xPos, height - 1);
                     //TShape
                     else if (nextShapeNumber == 4)
-                        shapes = GenerateTPiece(xPos, height + 1);
+                        shapes = GenerateTPiece(xPos, height);
                     //JShape
                     else if (nextShapeNumber == 5)
-                        shapes = GenerateJPiece(xPos, height);
+                        shapes = GenerateJPiece(xPos, height - 1);
                     //ZShape
                     else
-                        shapes = GenerateZPiece(xPos, height + 1);
+                        shapes = GenerateZPiece(xPos, height);
 
                     shadowShapeNumber = nextShapeNumber;
                 }
@@ -472,25 +488,25 @@ public class Tetris : MonoBehaviour
 
                     //SShape
                     if (shape == 0)
-                        shapes = GenerateSPiece(xPos, height + 2);
+                        shapes = GenerateSPiece(xPos, height + 1);
                     //IShape
                     else if (shape == 1)
-                        shapes = GenerateIPiece(xPos, height);
+                        shapes = GenerateIPiece(xPos, height - 1);
                     //OShape
                     else if (shape == 2)
-                        shapes = GenerateOPiece(xPos, height + 2);
+                        shapes = GenerateOPiece(xPos, height + 1);
                     //LShape
                     else if (shape == 3)
-                        shapes = GenerateLPiece(xPos, height + 1);
+                        shapes = GenerateLPiece(xPos, height);
                     //TShape
                     else if (shape == 4)
-                        shapes = GenerateTPiece(xPos, height + 2);
+                        shapes = GenerateTPiece(xPos, height + 1);
                     //JShape
                     else if (shape == 5)
                         shapes = GenerateJPiece(xPos, height);
                     //ZShape
                     else
-                        shapes = GenerateZPiece(xPos, height + 2);
+                        shapes = GenerateZPiece(xPos, height + 1);
 
                     shadowShapeNumber = shape;
                 }
@@ -503,7 +519,6 @@ public class Tetris : MonoBehaviour
                 {
                     foreach (Transform child in go)
                         Destroy(child.gameObject);
-
                     nextShapes.Clear();
                     go.localScale = new Vector3(1f, 1f, 1f);
                 }
@@ -518,7 +533,7 @@ public class Tetris : MonoBehaviour
                 //IShape
                 else if (shape == 1)
                 {
-                    nextShapes = GenerateIPiece(xPos2 - .5f, height2 - 1.5f);
+                    nextShapes = GenerateIPiece(xPos2 + .5f, height2 - 1.5f);
                     Rotate(nextShapes[0], nextShapes[1], nextShapes[2], nextShapes[3], RotateDirection.Left);
                 }
                 //OShape
@@ -528,7 +543,7 @@ public class Tetris : MonoBehaviour
                 else if (shape == 3)
                 {
                     nextShapes = GenerateLPiece(xPos2, height2 - 1f);
-                    Rotate(nextShapes[0], nextShapes[1], nextShapes[2], nextShapes[3], RotateDirection.Right);
+                    Rotate(nextShapes[0], nextShapes[1], nextShapes[2], nextShapes[3], RotateDirection.Left);
                 }
                 //TShape
                 else if (shape == 4)
@@ -536,8 +551,8 @@ public class Tetris : MonoBehaviour
                 //JShape
                 else if (shape == 5)
                 {
-                    nextShapes = GenerateJPiece(xPos2 + .5f, height2 - 1f);
-                    Rotate(nextShapes[0], nextShapes[1], nextShapes[2], nextShapes[3], RotateDirection.Left);
+                    nextShapes = GenerateJPiece(xPos2, height2 - 1f);
+                    Rotate(nextShapes[0], nextShapes[1], nextShapes[2], nextShapes[3], RotateDirection.Right);
                 }
                 //ZShape
                 else
@@ -595,11 +610,11 @@ public class Tetris : MonoBehaviour
         shadowPosition[3] = shadowShapes[3].transform.position;
 
         if (shadowShapeNumber == 1)
-            Rotate(shapes[0], shapes[1], shapes[2], shapes[3], RotateDirection.Left);
-        else if (shadowShapeNumber == 3)
             Rotate(shapes[0], shapes[1], shapes[2], shapes[3], RotateDirection.Right);
-        else if (shadowShapeNumber == 5)
+        else if (shadowShapeNumber == 3)
             Rotate(shapes[0], shapes[1], shapes[2], shapes[3], RotateDirection.Left);
+        else if (shadowShapeNumber == 5)
+            Rotate(shapes[0], shapes[1], shapes[2], shapes[3], RotateDirection.Right);
     }
 
     //Create a block at the position
@@ -726,9 +741,8 @@ public class Tetris : MonoBehaviour
                     }
                 }
             }
-            linesCleared++;
             Level.UpdateLinesLeft();
-
+            linesCleared++;
             CheckRow(y); //We moved blocks down, check again this row
         }
         else if (y + 1 < board.GetLength(1) - 3)
@@ -748,19 +762,19 @@ public class Tetris : MonoBehaviour
             switch (rotateDirection)
             {
                 case RotateDirection.Left:
-                    go.localEulerAngles = new Vector3(0, 0, -90);
-                    nextShapes[0].transform.localEulerAngles = new Vector3(0, 0, -90);
-                    nextShapes[1].transform.localEulerAngles = new Vector3(0, 0, -90);
-                    nextShapes[2].transform.localEulerAngles = new Vector3(0, 0, -90);
-                    nextShapes[3].transform.localEulerAngles = new Vector3(0, 0, -90);
-                    break;
-
-                case RotateDirection.Right:
                     go.localEulerAngles = new Vector3(0, 0, 90);
                     nextShapes[0].transform.localEulerAngles = new Vector3(0, 0, 90);
                     nextShapes[1].transform.localEulerAngles = new Vector3(0, 0, 90);
                     nextShapes[2].transform.localEulerAngles = new Vector3(0, 0, 90);
                     nextShapes[3].transform.localEulerAngles = new Vector3(0, 0, 90);
+                    break;
+
+                case RotateDirection.Right:
+                    go.localEulerAngles = new Vector3(0, 0, -90);
+                    nextShapes[0].transform.localEulerAngles = new Vector3(0, 0, -90);
+                    nextShapes[1].transform.localEulerAngles = new Vector3(0, 0, -90);
+                    nextShapes[2].transform.localEulerAngles = new Vector3(0, 0, -90);
+                    nextShapes[3].transform.localEulerAngles = new Vector3(0, 0, -90);
                     break;
             }
         }
@@ -775,11 +789,11 @@ public class Tetris : MonoBehaviour
             switch (rotateDirection)
             {
                 case RotateDirection.Left:
-                    currentRot -= 90;
+                    currentRot += 90;
                     break;
 
                 case RotateDirection.Right:
-                    currentRot += 90;
+                    currentRot -= 90;
                     break;
             }
 
@@ -812,11 +826,11 @@ public class Tetris : MonoBehaviour
                 switch (rotateDirection)
                 {
                     case RotateDirection.Left:
-                        currentRot += 90;
+                        currentRot -= 90;
                         break;
 
                     case RotateDirection.Right:
-                        currentRot -= 90;
+                        currentRot += 90;
                         break;
                 }
                 pivot.transform.localEulerAngles = new Vector3(0, 0, currentRot);
@@ -844,8 +858,17 @@ public class Tetris : MonoBehaviour
 
     private bool CheckRotate (Vector3 a, Vector3 b, Vector3 c, Vector3 d)
     {
+        //         try
+        //         {
+        if (Mathf.RoundToInt(a.x) <= 0 || Mathf.RoundToInt(b.x) <= 0 || Mathf.RoundToInt(c.x) <= 0 || Mathf.RoundToInt(d.x) <= 0)
+        {
+            print("can't rotate");
+            return false;
+        }
+
         if (Mathf.RoundToInt(a.x) < board.GetLength(0) - 1)
         {//Check if block is in board
+            print("is on board");
             if (board[Mathf.RoundToInt(a.x), Mathf.RoundToInt(a.y)] == 1)
             {
                 //If rotated block hit any other block or edge, after rotation
@@ -897,6 +920,12 @@ public class Tetris : MonoBehaviour
             print("Can't Rotate");
             return false;
         }
+        //       }
+        //         catch
+        //         {
+        //             Debug.LogWarning("Oops I rotated off the board; fix me please.");
+        //             return false;
+        //         }
         print("Can Rotate");
         return true; //We can rotate
     }
@@ -972,7 +1001,7 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        if (!nextPiece)
+        if (!nextPiece && !shadowPiece)
             pivot.transform.position = new Vector3(xPos + 0.5f, height + 1.5f, 0);
 
         if (shadowPiece)
@@ -994,8 +1023,8 @@ public class Tetris : MonoBehaviour
 
         List<Transform> list = new List<Transform>();
 
-        if (!nextPiece)
-            pivot.transform.position = new Vector3(xPos, height + 2, 0);
+        if (!nextPiece && !shadowPiece)
+            pivot.transform.position = new Vector3(xPos, height + 1, 0);
 
         if (shadowPiece)
             shadowPivot.transform.position = new Vector3(xPos, height + 1, 0);
@@ -1174,6 +1203,6 @@ internal enum RotateDirection
  * TODO: MAKE THE SHADOW PIECE COMPLETELY TRANSPARENT UNTIL IT HAS TOUCHED THE GROUND.(Completed)
  * TODO: CLASSIC TETRIS USER INTERFACE CREATION. (Complete)
  *
- * TODO: WORK ON ROTATION SO THERE IS NO ERRORS WHEN ROTATING
+ * TODO: WORK ON ROTATION SO THERE IS NO ERRORS WHEN ROTATING(Completed Kinda)
  * TODO: FIX GAME OVER GLITCH
 */
