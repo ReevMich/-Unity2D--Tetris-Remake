@@ -48,6 +48,8 @@ public class Tetris : MonoBehaviour
     private bool nextPiece;
 
     private bool softDrop;
+
+    private bool hardDrop;
     private bool shadowPiece;
 
     public bool holding = false;
@@ -103,8 +105,11 @@ public class Tetris : MonoBehaviour
         shapes[1].position = b;
         shapes[2].position = c;
         shapes[3].position = d;
+        SoundManager.Play(SoundManager.SoundEffectTypes.HardDrop);
 
+        hardDrop = true;
         StartCoroutine("MoveDown", blockFallSpeed);
+        hardDrop = false;
     }
 
     private void Update ()
@@ -214,7 +219,7 @@ public class Tetris : MonoBehaviour
             }
         }
 
-        print(blockFallSpeed);
+        //print(blockFallSpeed);
     }
 
     private IEnumerator MoveDown (float time)
@@ -248,6 +253,11 @@ public class Tetris : MonoBehaviour
             }
             else
             {
+
+                if (!hardDrop)
+                {
+                    SoundManager.Play(SoundManager.SoundEffectTypes.SoftDrop);
+                }
                 //We hit something. Stop and mark current shape location as filled in board, also destroy last pivot game object
 
                 Destroy(pivot.gameObject); //Destroy pivot
@@ -258,7 +268,8 @@ public class Tetris : MonoBehaviour
                 board[Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y)] = 1;
                 board[Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y)] = 1;
                 board[Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y)] = 1;
-
+                
+                
                 //****************************************************
                 CheckRow(1); //Check for any match
                 Score.IncreaseScoreLine(linesCleared);
@@ -367,6 +378,7 @@ public class Tetris : MonoBehaviour
             return true;
         }
 
+        
         return true;
     }
 
@@ -377,10 +389,10 @@ public class Tetris : MonoBehaviour
         {//Left
             if (board[Mathf.RoundToInt(a.x - 1), Mathf.RoundToInt(a.y)] == 1 || board[Mathf.RoundToInt(b.x - 1), Mathf.RoundToInt(b.y)] == 1 || board[Mathf.RoundToInt(c.x - 1), Mathf.RoundToInt(c.y)] == 1 || board[Mathf.RoundToInt(d.x - 1), Mathf.RoundToInt(d.y)] == 1)
             {
-                if (!holding)
-                {
-                    SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
-                }
+//                 if (!holding)
+//                 {
+//                     SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
+//                 }
 
                 return false;
             }
@@ -389,7 +401,10 @@ public class Tetris : MonoBehaviour
         {//Right
             if (board[Mathf.RoundToInt(a.x + 1), Mathf.RoundToInt(a.y)] == 1 || board[Mathf.RoundToInt(b.x + 1), Mathf.RoundToInt(b.y)] == 1 || board[Mathf.RoundToInt(c.x + 1), Mathf.RoundToInt(c.y)] == 1 || board[Mathf.RoundToInt(d.x + 1), Mathf.RoundToInt(d.y)] == 1)
             {
-                SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
+//                 if (!holding)
+//                 {
+//                     SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
+//                 } 
                 return false;
             }
         }
@@ -451,7 +466,7 @@ public class Tetris : MonoBehaviour
         for (int i = 0; i < 2; i++)
         {
             int shape = UnityEngine.Random.Range(0, 7);//Random shape
-            shape = 1;
+            //shape = 1;
             if (i == 0)
             {
                 if (nextShapes.Count != 0)
@@ -744,6 +759,7 @@ public class Tetris : MonoBehaviour
             Level.UpdateLinesLeft();
             linesCleared++;
             CheckRow(y); //We moved blocks down, check again this row
+            SoundManager.Play(SoundManager.SoundEffectTypes.LineClear);
         }
         else if (y + 1 < board.GetLength(1) - 3)
         {
