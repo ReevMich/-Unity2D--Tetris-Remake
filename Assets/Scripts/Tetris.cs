@@ -13,6 +13,9 @@ public class Tetris : MonoBehaviour
 
     public Material blockMaterial;
 
+    public ParticleSystem landParticle;
+    public ParticleSystem lineClearParticle;
+
     //Spawn boolean
     public bool spawn;
 
@@ -40,6 +43,10 @@ public class Tetris : MonoBehaviour
 
     private List<Transform> shadowShapes = new List<Transform>();
 
+    public List<Transform> clearedBlocks = new List<Transform>();
+
+    public List<Transform> aboveBlocks = new List<Transform>();
+
     public Vector3[] shadowPosition;
 
     //Set true if game over
@@ -51,6 +58,8 @@ public class Tetris : MonoBehaviour
 
     private bool hardDrop;
     private bool shadowPiece;
+
+    private bool delayDrop;
 
     public bool holding = false;
 
@@ -253,7 +262,6 @@ public class Tetris : MonoBehaviour
             }
             else
             {
-
                 if (!hardDrop)
                 {
                     SoundManager.Play(SoundManager.SoundEffectTypes.SoftDrop);
@@ -268,10 +276,10 @@ public class Tetris : MonoBehaviour
                 board[Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y)] = 1;
                 board[Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y)] = 1;
                 board[Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y)] = 1;
-                
-                
+
                 //****************************************************
                 CheckRow(1); //Check for any match
+                RemoveBlocks();
                 Score.IncreaseScoreLine(linesCleared);
                 CheckRow(gameOverHeight); //Check for game over
                 //****************************************************
@@ -288,8 +296,12 @@ public class Tetris : MonoBehaviour
                 DestroyShadowPiece();
                 spawn = false; //Spawn a new block
                 nextPiece = false;
-                SpawnShape();
-                SpawnShadowShape();
+
+                if (delayDrop == false)
+                {
+                    SpawnShape();
+                    SpawnShadowShape();
+                }
             }
 
             if (softDrop)
@@ -378,7 +390,6 @@ public class Tetris : MonoBehaviour
             return true;
         }
 
-        
         return true;
     }
 
@@ -389,10 +400,10 @@ public class Tetris : MonoBehaviour
         {//Left
             if (board[Mathf.RoundToInt(a.x - 1), Mathf.RoundToInt(a.y)] == 1 || board[Mathf.RoundToInt(b.x - 1), Mathf.RoundToInt(b.y)] == 1 || board[Mathf.RoundToInt(c.x - 1), Mathf.RoundToInt(c.y)] == 1 || board[Mathf.RoundToInt(d.x - 1), Mathf.RoundToInt(d.y)] == 1)
             {
-//                 if (!holding)
-//                 {
-//                     SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
-//                 }
+                //                 if (!holding)
+                //                 {
+                //                     SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
+                //                 }
 
                 return false;
             }
@@ -401,10 +412,10 @@ public class Tetris : MonoBehaviour
         {//Right
             if (board[Mathf.RoundToInt(a.x + 1), Mathf.RoundToInt(a.y)] == 1 || board[Mathf.RoundToInt(b.x + 1), Mathf.RoundToInt(b.y)] == 1 || board[Mathf.RoundToInt(c.x + 1), Mathf.RoundToInt(c.y)] == 1 || board[Mathf.RoundToInt(d.x + 1), Mathf.RoundToInt(d.y)] == 1)
             {
-//                 if (!holding)
-//                 {
-//                     SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
-//                 } 
+                //                 if (!holding)
+                //                 {
+                //                     SoundManager.Play(SoundManager.SoundEffectTypes.ErrorSound);
+                //                 }
                 return false;
             }
         }
@@ -466,7 +477,7 @@ public class Tetris : MonoBehaviour
         for (int i = 0; i < 2; i++)
         {
             int shape = UnityEngine.Random.Range(0, 7);//Random shape
-            //shape = 1;
+            shape = 1;
             if (i == 0)
             {
                 if (nextShapes.Count != 0)
@@ -742,15 +753,33 @@ public class Tetris : MonoBehaviour
                             if (height == y)
                             {
                                 //Set empty space
-                                board[xPos, height] = 0;
 
-                                Destroy(go.gameObject);
+                                clearedBlocks.Add(go.transform);
+                                if (clearedBlocks.Count == 40)
+                                {
+                                    CheckRow(y + 1);
+                                }
+                                else if (clearedBlocks.Count == 30)
+                                {
+                                    CheckRow(y + 1);
+                                }
+                                else if (clearedBlocks.Count == 20)
+                                {
+                                    CheckRow(y + 1);
+                                }
+                                else if (clearedBlocks.Count == 10)
+                                {
+                                    CheckRow(y + 1);
+                                }
+
+                                //Destroy(go.gameObject);
                             }
                             else if (height > y)
                             {
-                                board[xPos, height] = 0;//Set old position to empty
-                                board[xPos, height - 1] = 1;//Set new position
-                                go.transform.position = new Vector3(xPos, height - 1, go.transform.position.z);//Move block down
+                                if (!aboveBlocks.Contains(go.transform) && !clearedBlocks.Contains(go.transform))
+                                {
+                                    aboveBlocks.Add(go.transform);
+                                }
                             }
                         }
                     }
@@ -758,12 +787,89 @@ public class Tetris : MonoBehaviour
             }
             Level.UpdateLinesLeft();
             linesCleared++;
-            CheckRow(y); //We moved blocks down, check again this row
+            //CheckRow(y); //We moved blocks down, check again this row
             SoundManager.Play(SoundManager.SoundEffectTypes.LineClear);
         }
-        else if (y + 1 < board.GetLength(1) - 3)
+    }
+
+    private void RemoveBlocks ()
+    {
+        bool canStart = false;
+        if (clearedBlocks.Count >= 10)
         {
-            CheckRow(y + 1); //Check row above this
+            int counter = 0;
+            foreach (Transform item in clearedBlocks)
+            {
+                int xPos = Mathf.RoundToInt(item.position.x);
+                int height = Mathf.RoundToInt(item.position.y);
+
+                counter++;
+                board[xPos, height] = 0;
+                if (counter == 10)
+                {
+                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+                }
+                else if (counter == 20)
+                {
+                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+                }
+                else if (counter == 30)
+                {
+                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+                }
+                else if (counter == 40)
+                {
+                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+                }
+                Destroy(item.gameObject);
+            }
+            canStart = true;
+        }
+
+        if (canStart)
+        {
+            delayDrop = true;
+            StartCoroutine("DropDelay", .35f);
+            StopCoroutine("MoveDown");
+        }
+    }
+
+    private IEnumerator DropDelay (float time)
+    {
+        yield return new WaitForSeconds(time);
+        if (aboveBlocks.Count >= 0)
+        {
+            foreach (Transform item in aboveBlocks)
+            {
+                int xPos = Mathf.RoundToInt(item.position.x);
+                int height = Mathf.RoundToInt(item.position.y);
+
+                board[xPos, height] = 0;//Set old position to empty
+                board[xPos, height - clearedBlocks.Count / 10] = 1;//Set new position
+                item.position = new Vector3(xPos, height - clearedBlocks.Count / 10, item.position.z);
+            }
+            if (aboveBlocks.Count > 0)
+            {
+                landParticle.transform.position = new Vector3(landParticle.transform.position.x, Mathf.RoundToInt(aboveBlocks[1].position.y) - .30f, landParticle.transform.position.z);
+                landParticle.Play();
+            }
+
+            clearedBlocks.Clear();
+            aboveBlocks.Clear();
+
+            delayDrop = false;
+
+            StopCoroutine("DropDelay");
+            SpawnShape();
+            StartCoroutine("MoveDown", blockFallSpeed);
+            SpawnShadowShape();
+
+            GameObject[] particles = GameObject.FindGameObjectsWithTag("LineClearParticle");
+
+            foreach (GameObject item in particles)
+            {
+                Destroy(item);
+            }
         }
     }
 

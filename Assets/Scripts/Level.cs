@@ -10,7 +10,7 @@ public class Level : MonoBehaviour
 
     private const float START_FALL_SPEED = 1f;
     private static float gameSpeed;
-    private const float speedDecriment = .062f;
+    private const float speedDecriment = .07f;
 
     // Use this for initialization
     private void Start ()
