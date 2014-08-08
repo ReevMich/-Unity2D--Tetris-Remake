@@ -43,9 +43,9 @@ public class Tetris : MonoBehaviour
 
     private List<Transform> shadowShapes = new List<Transform>();
 
-    public List<Transform> clearedBlocks = new List<Transform>();
+    public List<GameObject> clearedBlocks = new List<GameObject>();
 
-    public List<Transform> aboveBlocks = new List<Transform>();
+    public List<GameObject> aboveBlocks = new List<GameObject>();
 
     public Vector3[] shadowPosition;
 
@@ -77,7 +77,10 @@ public class Tetris : MonoBehaviour
 
     private Piece piece;
 
+    private int linesClearedThisDrop;
     public int linesCleared;
+
+    private bool droppedAllRows;
 
     private int shadowShapeNumber;
 
@@ -276,14 +279,13 @@ public class Tetris : MonoBehaviour
                 board[Mathf.RoundToInt(b.x), Mathf.RoundToInt(b.y)] = 1;
                 board[Mathf.RoundToInt(c.x), Mathf.RoundToInt(c.y)] = 1;
                 board[Mathf.RoundToInt(d.x), Mathf.RoundToInt(d.y)] = 1;
-
+                linesClearedThisDrop = 0;
                 //****************************************************
                 CheckRow(1); //Check for any match
-                RemoveBlocks();
                 Score.IncreaseScoreLine(linesCleared);
                 CheckRow(gameOverHeight); //Check for game over
                 //****************************************************
-
+                linesClearedThisDrop = 0;
                 linesCleared = 0;
                 if (gameOver)
                 {
@@ -297,11 +299,9 @@ public class Tetris : MonoBehaviour
                 spawn = false; //Spawn a new block
                 nextPiece = false;
 
-                if (delayDrop == false)
-                {
-                    SpawnShape();
-                    SpawnShadowShape();
-                }
+                SpawnShape();
+                SpawnShadowShape();
+                droppedAllRows = false;
             }
 
             if (softDrop)
@@ -702,7 +702,10 @@ public class Tetris : MonoBehaviour
         }
 
         if (nextPiece)
+        {
             obj.parent = GameObject.Find("NextPiece").transform;
+            obj.tag = "NextBlock";
+        }
         else if (shadowPiece)
         {
             obj.tag = "ShadowBlock";
@@ -718,6 +721,10 @@ public class Tetris : MonoBehaviour
     //Check specific row for match
     private void CheckRow (int y)
     {
+        print(board.GetLength(0));
+        if (y > gameOverHeight)
+            return;
+
         GameObject[] blocks = GameObject.FindGameObjectsWithTag("Block"); //All blocks in the scene
         int count = 0; //Blocks found in a row
 
@@ -736,142 +743,184 @@ public class Tetris : MonoBehaviour
         }
 
         if (count == 10)
-        {//The row is full
-            //Start from bottom of the board(without edge and block spawn space)
-            for (int cy = y; cy < board.GetLength(1) - 3; cy++)
+        {
+            for (int y2 = y; y2 < board.GetLength(1) - 3; y2++)
             {
-                for (int cx = 1; cx < board.GetLength(0) - 1; cx++)
+                for (int x2 = 1; x2 < board.GetLength(0); x2++)
                 {
-                    foreach (GameObject go in blocks)
-                    {
-                        int height = Mathf.RoundToInt(go.transform.position.y);
-                        int xPos = Mathf.RoundToInt(go.transform.position.x);
-
-                        if (xPos == cx && height == cy)
-                        {
-                            //The row we need to destroy
-                            if (height == y)
-                            {
-                                //Set empty space
-
-                                clearedBlocks.Add(go.transform);
-                                if (clearedBlocks.Count == 40)
-                                {
-                                    CheckRow(y + 1);
-                                }
-                                else if (clearedBlocks.Count == 30)
-                                {
-                                    CheckRow(y + 1);
-                                }
-                                else if (clearedBlocks.Count == 20)
-                                {
-                                    CheckRow(y + 1);
-                                }
-                                else if (clearedBlocks.Count == 10)
-                                {
-                                    CheckRow(y + 1);
-                                }
-
-                                //Destroy(go.gameObject);
-                            }
-                            else if (height > y)
-                            {
-                                if (!aboveBlocks.Contains(go.transform) && !clearedBlocks.Contains(go.transform))
-                                {
-                                    aboveBlocks.Add(go.transform);
-                                }
-                            }
-                        }
-                    }
                 }
             }
-            Level.UpdateLinesLeft();
-            linesCleared++;
-            //CheckRow(y); //We moved blocks down, check again this row
-            SoundManager.Play(SoundManager.SoundEffectTypes.LineClear);
         }
+        else if (count > 0 && count < 10)
+        {
+        }
+        else
+        {
+            return;
+        }
+
+        //         if (count == 10)
+        //         {//The row is full
+        //             //Start from bottom of the board(without edge and block spawn space)
+        //             for (int cy = y; cy < board.GetLength(1) - 3; cy++)
+        //             {
+        //                 for (int cx = 1; cx < board.GetLength(0) - 1; cx++)
+        //                 {
+        //                     foreach (GameObject go in blocks)
+        //                     {
+        //                         int height = Mathf.RoundToInt(go.transform.position.y);
+        //                         int xPos = Mathf.RoundToInt(go.transform.position.x);
+        //
+        //                         if (xPos == cx && height == cy)
+        //                         {
+        //                             //The row we need to destroy
+        //                             if (height == y)
+        //                             {
+        //                                 //Set empty space
+        //
+        //                                 clearedBlocks.Add(go);
+        //                                 if (xPos == 10 && clearedBlocks.Count == 10)
+        //                                 {
+        //                                     RemoveRow();
+        //                                     CheckRow(y + 1);
+        //                                 }
+        //
+        //                                 //Destroy(go.gameObject);
+        //                             }
+        //                             else if (height > y)
+        //                             {
+        //                                 aboveBlocks.Add(go);
+        //
+        //                                 if (xPos == 10)
+        //                                 {
+        //                                     DropRow(y);
+        //                                     CheckRow(y + 1);
+        //                                 }
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //             Level.UpdateLinesLeft();
+        //
+        //             SoundManager.Play(SoundManager.SoundEffectTypes.LineClear);
+        //         }
+        //         else
+        //         {
+        //             CheckRow(y + 1);
+        //         }
     }
 
-    private void RemoveBlocks ()
+    private void DropRow (int row)
     {
-        bool canStart = false;
-        if (clearedBlocks.Count >= 10)
+        if (aboveBlocks.Count > 0)
         {
-            int counter = 0;
-            foreach (Transform item in clearedBlocks)
+            foreach (GameObject item in aboveBlocks)
             {
-                int xPos = Mathf.RoundToInt(item.position.x);
-                int height = Mathf.RoundToInt(item.position.y);
-
-                counter++;
-                board[xPos, height] = 0;
-                if (counter == 10)
-                {
-                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
-                }
-                else if (counter == 20)
-                {
-                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
-                }
-                else if (counter == 30)
-                {
-                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
-                }
-                else if (counter == 40)
-                {
-                    Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
-                }
-                Destroy(item.gameObject);
-            }
-            canStart = true;
-        }
-
-        if (canStart)
-        {
-            delayDrop = true;
-            StartCoroutine("DropDelay", .35f);
-            StopCoroutine("MoveDown");
-        }
-    }
-
-    private IEnumerator DropDelay (float time)
-    {
-        yield return new WaitForSeconds(time);
-        if (aboveBlocks.Count >= 0)
-        {
-            foreach (Transform item in aboveBlocks)
-            {
-                int xPos = Mathf.RoundToInt(item.position.x);
-                int height = Mathf.RoundToInt(item.position.y);
+                int xPos = Mathf.RoundToInt(item.transform.position.x);
+                int height = Mathf.RoundToInt(item.transform.position.y);
 
                 board[xPos, height] = 0;//Set old position to empty
-                board[xPos, height - clearedBlocks.Count / 10] = 1;//Set new position
-                item.position = new Vector3(xPos, height - clearedBlocks.Count / 10, item.position.z);
-            }
-            if (aboveBlocks.Count > 0)
-            {
-                landParticle.transform.position = new Vector3(landParticle.transform.position.x, Mathf.RoundToInt(aboveBlocks[1].position.y) - .30f, landParticle.transform.position.z);
-                landParticle.Play();
+                board[xPos, height - linesClearedThisDrop] = 1;//Set new position
+                item.transform.position = new Vector3(xPos, height - linesClearedThisDrop, item.transform.position.z);
             }
 
-            clearedBlocks.Clear();
             aboveBlocks.Clear();
-
-            delayDrop = false;
-
-            StopCoroutine("DropDelay");
-            SpawnShape();
-            StartCoroutine("MoveDown", blockFallSpeed);
-            SpawnShadowShape();
-
-            GameObject[] particles = GameObject.FindGameObjectsWithTag("LineClearParticle");
-
-            foreach (GameObject item in particles)
-            {
-                Destroy(item);
-            }
+            droppedAllRows = true;
         }
     }
+
+    private void RemoveRow ()
+    {
+        if (clearedBlocks.Count == 10)
+        {
+            int y = Mathf.RoundToInt(clearedBlocks[0].transform.position.y);
+            foreach (GameObject item in clearedBlocks)
+            {
+                int xPos = Mathf.RoundToInt(item.transform.position.x);
+                int height = Mathf.RoundToInt(item.transform.position.y);
+
+                board[xPos, height] = 0;
+                Destroy(item);
+            }
+            clearedBlocks.Clear();
+            Instantiate(lineClearParticle, new Vector3(5.5f, y, -10), Quaternion.identity);
+            linesCleared++;
+            linesClearedThisDrop++;
+        }
+    }
+
+    //     private void RemoveBlocks ()
+    //     {
+    //         bool canStart = false;
+    //         if (clearedBlocks.Count >= 10)
+    //         {
+    //             int counter = 0;
+    //             foreach (Transform item in clearedBlocks)
+    //             {
+    //                 int xPos = Mathf.RoundToInt(item.position.x);
+    //                 int height = Mathf.RoundToInt(item.position.y);
+    //
+    //                 counter++;
+    //                 board[xPos, height] = 0;
+    //                 if (counter == 10)
+    //                 {
+    //                     Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+    //                 }
+    //                 else if (counter == 20)
+    //                 {
+    //                     Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+    //                 }
+    //                 else if (counter == 30)
+    //                 {
+    //                     Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+    //                 }
+    //                 else if (counter == 40)
+    //                 {
+    //                     Instantiate(lineClearParticle, new Vector3(5.5f, height, -10), Quaternion.identity);
+    //                 }
+    //                 Destroy(item.gameObject);
+    //             }
+    //             canStart = true;
+    //         }
+    //
+    //         if (canStart)
+    //         {
+    //             delayDrop = true;
+    //             StartCoroutine("DropDelay", .35f);
+    //             StopCoroutine("MoveDown");
+    //         }
+    //     }
+    //
+    //     private IEnumerator DropDelay (float time)
+    //     {
+    //         yield return new WaitForSeconds(time);
+    //         if (aboveBlocks.Count >= 0)
+    //         {
+    //             if (aboveBlocks.Count > 0)
+    //             {
+    //                 landParticle.transform.position = new Vector3(landParticle.transform.position.x, Mathf.RoundToInt(aboveBlocks[1].position.y) - .30f, landParticle.transform.position.z);
+    //                 landParticle.Play();
+    //             }
+    //
+    //             clearedBlocks.Clear();
+    //             aboveBlocks.Clear();
+    //
+    //             delayDrop = false;
+    //
+    //             StopCoroutine("DropDelay");
+    //             SpawnShape();
+    //             StartCoroutine("MoveDown", blockFallSpeed);
+    //             SpawnShadowShape();
+    //
+    //             GameObject[] particles = GameObject.FindGameObjectsWithTag("LineClearParticle");
+    //
+    //             foreach (GameObject item in particles)
+    //             {
+    //                 Destroy(item);
+    //             }
+    //         }
+    //     }
 
     private void Rotate (Transform a, Transform b, Transform c, Transform d, RotateDirection rotateDirection)
     {
@@ -1296,7 +1345,10 @@ public class Tetris : MonoBehaviour
         {
             for (int y = 0; y < board.GetLength(1) - 1; y++)
             {
-                print("[x:" + x + " | " + "y:" + y + "]");
+                if (board[x, y] == 1)
+                {
+                    print("[x:" + x + " | " + "y:" + y + "]");
+                }
             }
         }
     }
