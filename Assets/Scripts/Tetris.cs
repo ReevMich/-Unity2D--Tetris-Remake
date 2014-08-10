@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,6 +17,8 @@ public class Tetris : MonoBehaviour
 
     //Spawn boolean
     public bool spawn;
+
+    private int currentRow = 0;
 
     // Constant MovementTime for movement keys
     private const float movementTime = 0.15f;
@@ -77,6 +78,7 @@ public class Tetris : MonoBehaviour
 
     private Piece piece;
 
+    private int blocksDestroyedThisDrop;
     private int linesClearedThisDrop;
     public int linesCleared;
 
@@ -86,7 +88,7 @@ public class Tetris : MonoBehaviour
 
     private int nextShapeNumber;
 
-    private IEnumerator Start ()
+    private IEnumerator Start()
     {
         //Set board width and height
         board = new int[12, 25];
@@ -100,7 +102,7 @@ public class Tetris : MonoBehaviour
         yield return StartCoroutine("MoveDown", blockFallSpeed);
     }
 
-    private void HardDrop ()
+    private void HardDrop()
     {
         StopCoroutine("MoveDown");
 
@@ -124,7 +126,7 @@ public class Tetris : MonoBehaviour
         hardDrop = false;
     }
 
-    private void Update ()
+    private void Update()
     {
         blockFallSpeed = Level.GetGameSpeed();
         // If there is block
@@ -234,7 +236,7 @@ public class Tetris : MonoBehaviour
         //print(blockFallSpeed);
     }
 
-    private IEnumerator MoveDown (float time)
+    private IEnumerator MoveDown(float time)
     {
         while (true)
         {
@@ -302,6 +304,7 @@ public class Tetris : MonoBehaviour
                 SpawnShape();
                 SpawnShadowShape();
                 droppedAllRows = false;
+                currentRow = 0;
             }
 
             if (softDrop)
@@ -313,7 +316,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveDownShadowShape ()
+    private IEnumerator MoveDownShadowShape()
     {
         while (true)
         {
@@ -363,7 +366,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private bool CheckMove (Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+    private bool CheckMove(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
     {
         try
         {
@@ -393,7 +396,7 @@ public class Tetris : MonoBehaviour
         return true;
     }
 
-    private bool CheckUserMove (Vector3 a, Vector3 b, Vector3 c, Vector3 d, bool dir)
+    private bool CheckUserMove(Vector3 a, Vector3 b, Vector3 c, Vector3 d, bool dir)
     {
         //Check, if we move a block left/right will it hit something
         if (dir)
@@ -423,7 +426,7 @@ public class Tetris : MonoBehaviour
         return true;
     }
 
-    private void GenerateBoard ()
+    private void GenerateBoard()
     {
         GameObject boardObject = GameObject.Find("Board");
         for (int x = 0; x < board.GetLength(0); x++)
@@ -467,7 +470,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private void SpawnShape ()
+    private void SpawnShape()
     {
         int height = board.GetLength(1) - 4;
         int xPos = board.GetLength(0) / 2 - 1;
@@ -597,7 +600,7 @@ public class Tetris : MonoBehaviour
         nextPiece = false;
     }
 
-    private void SpawnShadowShape ()
+    private void SpawnShadowShape()
     {
         int height = board.GetLength(1) - 4;
         int xPos = board.GetLength(0) / 2 - 1;
@@ -644,7 +647,7 @@ public class Tetris : MonoBehaviour
     }
 
     //Create a block at the position
-    private Transform GenerateBlock (Vector3 pos, Piece piece)
+    private Transform GenerateBlock(Vector3 pos, Piece piece)
     {
         Transform obj = null;
         Material mat = new Material(blockMaterial);
@@ -719,9 +722,9 @@ public class Tetris : MonoBehaviour
     }
 
     //Check specific row for match
-    private void CheckRow (int y)
+    private void CheckRow(int y)
     {
-        print(board.GetLength(0));
+        currentRow++;
         if (y > gameOverHeight)
             return;
 
@@ -748,15 +751,39 @@ public class Tetris : MonoBehaviour
             {
                 for (int x2 = 1; x2 < board.GetLength(0); x2++)
                 {
+                    foreach (GameObject block in blocks)
+                    {
+                        int height = Mathf.RoundToInt(block.transform.position.y);
+                        int xPos = Mathf.RoundToInt(block.transform.position.x);
+
+                        if (height == y2 && xPos == x2)
+                        {
+                            if (height == y)
+                            {
+                                board[xPos, height] = 0;
+                                Instantiate(lineClearParticle, new Vector3(xPos, y, 0), Quaternion.identity);
+                                Destroy(block);
+                                if (xPos == 10)
+                                {
+                                    CheckRow(y + 1);
+                                }
+                            }
+                            else if (height > y)
+                            {
+                                board[xPos, height] = 0;
+                                board[xPos, height - 1] = 1;
+
+                                block.transform.position = new Vector3(xPos, height - 1, block.transform.position.z);
+                            }
+                        }
+                    }
                 }
             }
+            CheckRow(y); // We moved the blocks down now we check this row again.
         }
-        else if (count > 0 && count < 10)
+        else if (y + 1 < board.GetLength(1) - 3)
         {
-        }
-        else
-        {
-            return;
+            CheckRow(y + 1); //Check row above this
         }
 
         //         if (count == 10)
@@ -811,7 +838,25 @@ public class Tetris : MonoBehaviour
         //         }
     }
 
-    private void DropRow (int row)
+    private void DestroyBlock(GameObject block)
+    {
+        if (block != null)
+        {
+            blocksDestroyedThisDrop++;
+            Destroy(block);
+            if (blocksDestroyedThisDrop == 10)
+            {
+                print("Particle Effect Goes off....... Now");
+                // Do animation particle effect
+                blocksDestroyedThisDrop = 0;
+
+                CheckRow(Mathf.RoundToInt(block.transform.position.y) + 1);
+                linesClearedThisDrop++;
+            }
+        }
+    }
+
+    private void DropRow()
     {
         if (aboveBlocks.Count > 0)
         {
@@ -821,8 +866,8 @@ public class Tetris : MonoBehaviour
                 int height = Mathf.RoundToInt(item.transform.position.y);
 
                 board[xPos, height] = 0;//Set old position to empty
-                board[xPos, height - linesClearedThisDrop] = 1;//Set new position
-                item.transform.position = new Vector3(xPos, height - linesClearedThisDrop, item.transform.position.z);
+                board[xPos, height - 1] = 1;//Set new position
+                item.transform.position = new Vector3(xPos, height - 1, item.transform.position.z);
             }
 
             aboveBlocks.Clear();
@@ -830,7 +875,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private void RemoveRow ()
+    private void RemoveRow()
     {
         if (clearedBlocks.Count == 10)
         {
@@ -846,7 +891,6 @@ public class Tetris : MonoBehaviour
             clearedBlocks.Clear();
             Instantiate(lineClearParticle, new Vector3(5.5f, y, -10), Quaternion.identity);
             linesCleared++;
-            linesClearedThisDrop++;
         }
     }
 
@@ -922,7 +966,7 @@ public class Tetris : MonoBehaviour
     //         }
     //     }
 
-    private void Rotate (Transform a, Transform b, Transform c, Transform d, RotateDirection rotateDirection)
+    private void Rotate(Transform a, Transform b, Transform c, Transform d, RotateDirection rotateDirection)
     {
         ResetShadowPosition();
 
@@ -1027,7 +1071,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private bool CheckRotate (Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+    private bool CheckRotate(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
     {
         //         try
         //         {
@@ -1101,7 +1145,7 @@ public class Tetris : MonoBehaviour
         return true; //We can rotate
     }
 
-    private List<Transform> GenerateOPiece (float xPos, float height)
+    private List<Transform> GenerateOPiece(float xPos, float height)
     {
         piece = Piece.O;
 
@@ -1122,7 +1166,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private List<Transform> GenerateTPiece (float xPos, float height)
+    private List<Transform> GenerateTPiece(float xPos, float height)
     {
         piece = Piece.T;
 
@@ -1144,7 +1188,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private List<Transform> GenerateZPiece (float xPos, float height)
+    private List<Transform> GenerateZPiece(float xPos, float height)
     {
         piece = Piece.Z;
 
@@ -1166,7 +1210,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private List<Transform> GenerateIPiece (float xPos, float height)
+    private List<Transform> GenerateIPiece(float xPos, float height)
     {
         piece = Piece.I;
 
@@ -1188,7 +1232,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private List<Transform> GenerateSPiece (float xPos, float height)
+    private List<Transform> GenerateSPiece(float xPos, float height)
     {
         piece = Piece.S;
 
@@ -1210,7 +1254,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private List<Transform> GenerateLPiece (float xPos, float height)
+    private List<Transform> GenerateLPiece(float xPos, float height)
     {
         piece = Piece.L;
 
@@ -1232,7 +1276,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private List<Transform> GenerateJPiece (float xPos, float height)
+    private List<Transform> GenerateJPiece(float xPos, float height)
     {
         piece = Piece.J;
 
@@ -1253,7 +1297,7 @@ public class Tetris : MonoBehaviour
         return list;
     }
 
-    private void DestroyShadowPiece ()
+    private void DestroyShadowPiece()
     {
         GameObject[] gos = GameObject.FindGameObjectsWithTag("ShadowBlock");
 
@@ -1263,7 +1307,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private void MoveLeft ()
+    private void MoveLeft()
     {
         ResetShadowPosition();
 
@@ -1298,7 +1342,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private void MoveRight ()
+    private void MoveRight()
     {
         ResetShadowPosition();
 
@@ -1331,7 +1375,7 @@ public class Tetris : MonoBehaviour
         }
     }
 
-    private void ResetShadowPosition ()
+    private void ResetShadowPosition()
     {
         shadowPosition[0] = Vector3.zero;
         shadowPosition[1] = Vector3.zero;
@@ -1339,7 +1383,7 @@ public class Tetris : MonoBehaviour
         shadowPosition[3] = Vector3.zero;
     }
 
-    private void OutputGrid ()
+    private void OutputGrid()
     {
         for (int x = 0; x < board.GetLength(0) - 1; x++)
         {

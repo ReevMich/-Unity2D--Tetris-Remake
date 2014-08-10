@@ -21,3 +21,4 @@ C:\Users\MacBookPro\Documents\GitHub\-Unity2D--Tetris-Remake\obj\Debug\UnityVS.-
 C:\Users\MacBookPro\Documents\GitHub\-Unity2D--Tetris-Remake\obj\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.dll
 C:\Users\MacBookPro\Documents\GitHub\-Unity2D--Tetris-Remake\obj\Debug\UnityVS.-Unity2D--Tetris-Remake.CSharp.pdb
 C:\Users\DaBeast\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\UnityVS.-Unity2D--Tetris-Remake.UnityScript.Plugins.pdb
+C:\Users\MacBookPro\Documents\GitHub\-Unity2D--Tetris-Remake\Temp\bin\Debug\UnityVS.-Unity2D--Tetris-Remake.UnityScript.Plugins.pdb
